@@ -38,6 +38,7 @@ function Callout({ text }: { text: string }) {
 function App() {
   const [data, setData] = useState<MtaDataset | null>(null);
   const [selectedCommuteYear, setSelectedCommuteYear] = useState('2024');
+  const [selectedRankingYear, setSelectedRankingYear] = useState('total');
 
   useEffect(() => {
     let cancelled = false;
@@ -105,6 +106,15 @@ function App() {
   const rankingTakeaway = `${topStation.station} logged the most measured entries at ${formatFull(topStation.riders)}, while ${
     fastestGrowingStation.station
   } grew the fastest year over year at +${fastestGrowingStation.change}%.`;
+
+  const rankingYears = data.stationRankingsByYear.map((entry) => entry.year);
+  const selectedStationRankings =
+    selectedRankingYear === 'total'
+      ? data.stationRankings
+      : data.stationRankingsByYear.find((entry) => entry.year === selectedRankingYear)?.rankings ?? data.stationRankings;
+
+  const boroughHeadline = `${topBorough.name} rules the turnstiles`;
+  const rankingHeadline = `${topStation.station} is the busiest hub in the system`;
 
   return (
     <div className="app-shell">
@@ -264,7 +274,7 @@ function App() {
           <div>
             <div className="section-head">
               <p className="eyebrow">Borough comparisons</p>
-              <h2>Entries are grouped by the borough where the station is located.</h2>
+              <h2>{boroughHeadline}</h2>
               <p>{boroughTakeaway}</p>
               <Callout text="This is not rider home borough or destination. It is each borough's share of measured subway entries by station location." />
             </div>
@@ -308,13 +318,33 @@ function App() {
         <section className="panel story-panel">
           <div className="section-head">
             <p className="eyebrow">Top station rankings</p>
-            <h2>The busiest station complexes are ranked by total measured subway entries.</h2>
+            <h2>{rankingHeadline}</h2>
             <p>{rankingTakeaway}</p>
             <Callout text="Rankings use total measured boardings/entries in the dataset for each station complex, not unique riders." />
           </div>
 
+          <div className="year-toggle" aria-label="Select station ranking year">
+            <button
+              className={selectedRankingYear === 'total' ? 'active' : ''}
+              type="button"
+              onClick={() => setSelectedRankingYear('total')}
+            >
+              Total
+            </button>
+            {rankingYears.map((year) => (
+              <button
+                className={year === selectedRankingYear ? 'active' : ''}
+                key={year}
+                type="button"
+                onClick={() => setSelectedRankingYear(year)}
+              >
+                {year}
+              </button>
+            ))}
+          </div>
+
           <div className="ranking-list">
-            {data.stationRankings.map((station, index) => (
+            {selectedStationRankings.map((station, index) => (
               <article className="rank-card" key={station.station}>
                 <span className="rank-badge">#{index + 1}</span>
                 <div>
@@ -381,10 +411,7 @@ function App() {
         <section className="panel facts-panel">
           <div className="section-head">
             <p className="eyebrow">Notable takeaways</p>
-            <h2>Four plain-language signals from the data.</h2>
-            <p>
-              These cards avoid hidden denominators: each metric names the year, place, or behavior it summarizes.
-            </p>
+            <h2>Ridership recovered, entries stayed concentrated in Manhattan, and OMNY became the dominant payment method.</h2>
             <Callout text="These cards avoid hidden denominators: each metric names the exact year, place, or behavior it summarizes." />
           </div>
 
@@ -396,25 +423,6 @@ function App() {
                 <p>{fact.copy}</p>
               </article>
             ))}
-          </div>
-        </section>
-
-        <section className="panel recap-panel">
-          <p className="eyebrow">Bottom line</p>
-          <h2>Ridership recovered, entries stayed concentrated in Manhattan, and OMNY became the dominant payment method.</h2>
-          <div className="recap-box">
-            <div>
-              <span>Highest annual entries</span>
-              <strong>2024</strong>
-            </div>
-            <div>
-              <span>Primary entry borough</span>
-              <strong>{data.boroughs[0]?.name ?? 'Manhattan'}</strong>
-            </div>
-            <div>
-              <span>Leading payment method</span>
-              <strong>OMNY tap</strong>
-            </div>
           </div>
         </section>
       </main>

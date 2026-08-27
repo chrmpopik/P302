@@ -44,6 +44,11 @@ export type YearlyHourlyPattern = {
   pattern: HourlyPattern[];
 };
 
+export type YearlyStationRankings = {
+  year: string;
+  rankings: StationRanking[];
+};
+
 export type InsightCard = {
   title: string;
   copy: string;
@@ -60,6 +65,7 @@ export type MtaDataset = {
   yearlyTrend: YearlyTrend[];
   boroughs: BoroughData[];
   stationRankings: StationRanking[];
+  stationRankingsByYear: YearlyStationRankings[];
   paymentBreakdown: PaymentMethod[];
   paymentTrend: PaymentTrend[];
   hourlyPattern: HourlyPattern[];
@@ -93,6 +99,11 @@ type StationAggregate = RidershipAggregate & {
   borough?: string;
 };
 
+type StationYearAggregate = YearAggregate & {
+  station_complex?: string;
+  borough?: string;
+};
+
 type PaymentAggregate = YearAggregate & {
   payment_method?: string;
 };
@@ -120,6 +131,33 @@ const paymentColors: Record<string, string> = {
   'omny tap': '#6ee7b7',
 };
 
+const mockStationRankingsBase: StationRanking[] = [
+  { station: 'Times Sq – 42 St', riders: 61000000, borough: 'Manhattan', change: 8 },
+  { station: 'Grand Central', riders: 54000000, borough: 'Manhattan', change: 11 },
+  { station: 'Atlantic Av-Barclays', riders: 49100000, borough: 'Brooklyn', change: 6 },
+  { station: '86 St', riders: 44800000, borough: 'Brooklyn', change: 9 },
+  { station: 'Jamaica Center', riders: 41200000, borough: 'Queens', change: 12 },
+];
+
+const mockRecoveryByYear: Record<string, number> = { '2020': 28, '2021': 46, '2022': 62, '2023': 81, '2024': 100 };
+
+const mockStationRankingsByYear: YearlyStationRankings[] = dataYears.map((year, yearIndex) => {
+  const previousYear = dataYears[yearIndex - 1];
+  const recovery = mockRecoveryByYear[year];
+  const previousRecovery = previousYear ? mockRecoveryByYear[previousYear] : recovery;
+
+  return {
+    year,
+    rankings: mockStationRankingsBase
+      .map((station) => ({
+        ...station,
+        riders: Math.round(station.riders * (recovery / 100)),
+        change: yearIndex === 0 ? 0 : Math.round(((recovery - previousRecovery) / Math.max(previousRecovery, 1)) * 100),
+      }))
+      .sort((a, b) => b.riders - a.riders),
+  };
+});
+
 export const mockMtaDataset: MtaDataset = {
   headline: {
     totalRidership: 2310000000,
@@ -141,13 +179,8 @@ export const mockMtaDataset: MtaDataset = {
     { name: 'Bronx', ridership: 260000000, share: 11, color: '#34d399' },
     { name: 'Staten Island', ridership: 68000000, share: 3, color: '#f97316' },
   ],
-  stationRankings: [
-    { station: 'Times Sq – 42 St', riders: 61000000, borough: 'Manhattan', change: 8 },
-    { station: 'Grand Central', riders: 54000000, borough: 'Manhattan', change: 11 },
-    { station: 'Atlantic Av-Barclays', riders: 49100000, borough: 'Brooklyn', change: 6 },
-    { station: '86 St', riders: 44800000, borough: 'Brooklyn', change: 9 },
-    { station: 'Jamaica Center', riders: 41200000, borough: 'Queens', change: 12 },
-  ],
+  stationRankings: mockStationRankingsBase,
+  stationRankingsByYear: mockStationRankingsByYear,
   paymentBreakdown: [
     { name: 'OMNY tap', value: 73, color: '#6ee7b7' },
     { name: 'MetroCard', value: 20, color: '#8b5cf6' },
@@ -283,6 +316,7 @@ export function buildSnapshot(rows: NyApiRow[]): MtaDataset {
   const yearlyTotals = new Map<string, number>();
   const boroughTotals = new Map<string, number>();
   const stationTotals = new Map<string, { borough: string; riders: number }>();
+  const stationTotalsByYear = new Map<string, Map<string, { borough: string; riders: number }>>();
   const paymentTotals = new Map<string, number>();
   const paymentTotalsByYear = new Map<string, Map<string, number>>();
   const hourlyWeekday = new Map<string, number>();
@@ -311,6 +345,13 @@ export function buildSnapshot(rows: NyApiRow[]): MtaDataset {
       current.riders += ridership;
       if (current.borough === 'Unknown' && borough !== 'Unknown') current.borough = borough;
       stationTotals.set(station, current);
+
+      const yearStationTotals = stationTotalsByYear.get(year) ?? new Map<string, { borough: string; riders: number }>();
+      const currentYearStation = yearStationTotals.get(station) ?? { borough, riders: 0 };
+      currentYearStation.riders += ridership;
+      if (currentYearStation.borough === 'Unknown' && borough !== 'Unknown') currentYearStation.borough = borough;
+      yearStationTotals.set(station, currentYearStation);
+      stationTotalsByYear.set(year, yearStationTotals);
     }
     if (paymentName) paymentTotals.set(paymentName, (paymentTotals.get(paymentName) ?? 0) + ridership);
     if (paymentName) {
@@ -375,6 +416,19 @@ export function buildSnapshot(rows: NyApiRow[]): MtaDataset {
       change: 6 + index * 2,
     }));
 
+  const stationRankingsByYear = years.map((year) => ({
+    year,
+    rankings: [...(stationTotalsByYear.get(year) ?? new Map<string, { borough: string; riders: number }>()).entries()]
+      .map(([station, stationData]) => ({
+        station,
+        riders: stationData.riders,
+        borough: stationData.borough,
+        change: 0,
+      }))
+      .sort((a, b) => b.riders - a.riders)
+      .slice(0, 5),
+  }));
+
   const paymentBreakdown = [...paymentTotals.entries()]
     .map(([name, value]) => ({
       name: name === 'omny' ? 'OMNY tap' : name === 'metrocard' ? 'MetroCard' : 'Single ride',
@@ -425,6 +479,7 @@ export function buildSnapshot(rows: NyApiRow[]): MtaDataset {
     yearlyTrend,
     boroughs: boroughEntries,
     stationRankings,
+    stationRankingsByYear,
     paymentBreakdown: normalizedPayment,
       paymentTrend,
     hourlyPattern,
@@ -488,12 +543,14 @@ function buildDatasetFromAggregates({
   annualRows,
   boroughRows,
   stationRows,
+  stationYearRows,
   paymentRows,
   hourlyRows,
 }: {
   annualRows: YearAggregate[];
   boroughRows: BoroughAggregate[];
   stationRows: StationAggregate[];
+  stationYearRows: StationYearAggregate[];
   paymentRows: PaymentAggregate[];
   hourlyRows: HourlyAggregate[];
 }): MtaDataset {
@@ -537,6 +594,27 @@ function buildDatasetFromAggregates({
     riders: numberFromRow(row.ridership),
     borough: row.borough?.trim() || 'Unknown',
     change: 6 + index * 2,
+  }));
+
+  const stationYearGroups = new Map<string, StationYearAggregate[]>();
+  stationYearRows.forEach((row) => {
+    const year = String(row.year);
+    const group = stationYearGroups.get(year) ?? [];
+    group.push(row);
+    stationYearGroups.set(year, group);
+  });
+
+  const stationRankingsByYear = dataYears.map((year) => ({
+    year,
+    rankings: (stationYearGroups.get(year) ?? [])
+      .map((row) => ({
+        station: row.station_complex?.trim() || 'Unknown',
+        riders: numberFromRow(row.ridership),
+        borough: row.borough?.trim() || 'Unknown',
+        change: 0,
+      }))
+      .sort((a, b) => b.riders - a.riders)
+      .slice(0, 5),
   }));
 
   const paymentTotalsByYear = new Map<string, Map<string, number>>();
@@ -607,6 +685,7 @@ function buildDatasetFromAggregates({
     yearlyTrend,
     boroughs,
     stationRankings,
+    stationRankingsByYear,
     paymentBreakdown,
     paymentTrend,
     hourlyPattern: buildHourlyPatternFromMaps(hourlyWeekday, hourlyWeekend),
@@ -646,7 +725,7 @@ export async function loadRidershipSnapshot(): Promise<MtaDataset> {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 12000);
 
-    const [annualRows, boroughRows, stationRows, paymentRows, hourlyRows] = await Promise.all([
+    const [annualRows, boroughRows, stationRows, stationYearRows, paymentRows, hourlyRows] = await Promise.all([
       fetchGroupedRows<YearAggregate>({
         '$select': 'date_extract_y(transit_timestamp) as year, sum(ridership) as ridership',
         '$where': where,
@@ -665,6 +744,13 @@ export async function loadRidershipSnapshot(): Promise<MtaDataset> {
         '$where': where,
         '$group': 'station_complex, borough',
         '$order': 'ridership DESC',
+      }, controller.signal),
+      fetchGroupedRows<StationYearAggregate>({
+        '$limit': '2000',
+        '$select': 'date_extract_y(transit_timestamp) as year, station_complex, borough, sum(ridership) as ridership',
+        '$where': where,
+        '$group': 'date_extract_y(transit_timestamp), station_complex, borough',
+        '$order': 'year, ridership DESC',
       }, controller.signal),
       fetchGroupedRows<PaymentAggregate>({
         '$select': 'date_extract_y(transit_timestamp) as year, payment_method, sum(ridership) as ridership',
@@ -690,6 +776,7 @@ export async function loadRidershipSnapshot(): Promise<MtaDataset> {
       annualRows,
       boroughRows,
       stationRows,
+      stationYearRows,
       paymentRows,
       hourlyRows,
     });
