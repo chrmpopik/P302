@@ -24,6 +24,14 @@ const formatNumber = (value: number) =>
 const formatFull = (value: number) =>
   new Intl.NumberFormat('en-US').format(value);
 
+function InfoTip({ text }: { text: string }) {
+  return (
+    <span className="info-tip" title={text}>
+      i
+    </span>
+  );
+}
+
 function App() {
   const [data, setData] = useState<MtaDataset | null>(null);
   const [selectedCommuteYear, setSelectedCommuteYear] = useState('2024');
@@ -100,6 +108,7 @@ function App() {
               </div>
             </div>
             <p className="metric-note">
+              <InfoTip text="These percentages are shares of measured subway entries, not unique riders, and 'recovery' compares 2024 totals with the highest annual total in the 2020-2024 dataset." />
               Percent metrics are shares of measured subway entries. The recovery figure compares 2024 ridership with
               the highest annual ridership in the 2020-2024 dataset.
             </p>
@@ -134,6 +143,7 @@ function App() {
             <p className="eyebrow">The pandemic impact</p>
             <h2>2020 hit hard, then the city found its rhythm again.</h2>
               <p>
+                <InfoTip text="Counts are total subway entries for the year, not unique riders. Each card's percentage compares that year against the highest annual total in the 2020-2024 dataset." />
                 Annual rider counts are shown as total subway entries. The percentage cards compare each year with the
                 highest annual total in this five-year view.
               </p>
@@ -181,6 +191,7 @@ function App() {
             <p className="eyebrow">How commuting habits changed</p>
             <h2>Rush hour still rules, but the city is less rigid and more flexible.</h2>
             <p>
+              <InfoTip text="Each series is indexed to its own busiest hour, not to total riders. A value of 100 marks that day-type's peak hour, so weekday and weekend bars aren't directly comparable in raw rider counts." />
               Select a year to compare weekday and weekend demand by hour. Each series is indexed so its own busiest
               hour equals 100.
             </p>
@@ -226,6 +237,7 @@ function App() {
               <p className="eyebrow">Borough comparisons</p>
               <h2>Entries are grouped by the borough where the station is located.</h2>
               <p>
+                <InfoTip text="This is not rider home borough or destination. It is each borough's share of measured subway entries by station location." />
                 This is not rider home borough or destination. It is each borough's share of measured subway entries by
                 station location.
               </p>
@@ -271,7 +283,10 @@ function App() {
           <div className="section-head">
             <p className="eyebrow">Top station rankings</p>
             <h2>The busiest station complexes are ranked by total measured subway entries.</h2>
-            <p>Ranking uses total boardings/entries in the dataset, grouped by station complex.</p>
+            <p>
+              <InfoTip text="Rankings use total measured boardings/entries in the dataset for each station complex, not unique riders." />
+              Ranking uses total boardings/entries in the dataset, grouped by station complex.
+            </p>
           </div>
 
           <div className="ranking-list">
@@ -297,6 +312,7 @@ function App() {
               <p className="eyebrow">MetroCard vs OMNY</p>
               <h2>Payment habits shifted from swipes to taps over time.</h2>
               <p>
+                <InfoTip text="Shares are based on measured subway entries by payment method, not the number of unique riders." />
                 The trend shows each payment method's share of measured subway entries for every year from 2020 to 2024.
               </p>
             </div>
@@ -344,7 +360,10 @@ function App() {
           <div className="section-head">
             <p className="eyebrow">Notable takeaways</p>
             <h2>Four plain-language signals from the data.</h2>
-            <p>These cards avoid hidden denominators: each metric names the year, place, or behavior it summarizes.</p>
+            <p>
+              <InfoTip text="These cards avoid hidden denominators: each metric names the exact year, place, or behavior it summarizes." />
+              These cards avoid hidden denominators: each metric names the year, place, or behavior it summarizes.
+            </p>
           </div>
 
           <div className="facts-grid">
