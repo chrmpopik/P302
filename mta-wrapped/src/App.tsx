@@ -71,6 +71,16 @@ function App() {
     data.hourlyPatternByYear.find((entry) => entry.year === selectedCommuteYear)?.pattern ?? data.hourlyPattern;
   const latestPaymentYear = data.paymentTrend[data.paymentTrend.length - 1];
 
+  const firstYearPattern = data.hourlyPatternByYear[0];
+  const lastYearPattern = data.hourlyPatternByYear[data.hourlyPatternByYear.length - 1];
+  const findHourValue = (pattern: typeof data.hourlyPattern, hour: string, key: 'weekday' | 'weekend') =>
+    pattern.find((entry) => entry.hour === hour)?.[key] ?? 0;
+  const morningRushEarly = findHourValue(firstYearPattern.pattern, '8a', 'weekday');
+  const morningRushLate = findHourValue(lastYearPattern.pattern, '8a', 'weekday');
+  const weekendEveningEarly = findHourValue(firstYearPattern.pattern, '7p', 'weekend');
+  const weekendEveningLate = findHourValue(lastYearPattern.pattern, '7p', 'weekend');
+  const commuteTakeaway = `In ${firstYearPattern.year}, the 8am weekday rush was muted (index ${morningRushEarly}) while weekend evenings ran nearly as busy as weekdays (index ${weekendEveningEarly} at 7pm). By ${lastYearPattern.year}, the 8am commute rush is back near its old strength (index ${morningRushLate}), and weekend evening demand has cooled to ${weekendEveningLate}, showing the day is less flat and rush hour has reasserted itself.`;
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -229,6 +239,10 @@ function App() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+
+          <p className="insight-callout">
+            <strong>Takeaway:</strong> {commuteTakeaway}
+          </p>
         </section>
 
         <section className="panel story-panel split-panel">
