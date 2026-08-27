@@ -24,11 +24,14 @@ const formatNumber = (value: number) =>
 const formatFull = (value: number) =>
   new Intl.NumberFormat('en-US').format(value);
 
-function InfoTip({ text }: { text: string }) {
+function Callout({ text }: { text: string }) {
   return (
-    <span className="info-tip" title={text}>
-      i
-    </span>
+    <p className="insight-callout">
+      <span className="info-tip callout-icon" aria-hidden="true">
+        i
+      </span>
+      <span>{text}</span>
+    </p>
   );
 }
 
@@ -81,6 +84,28 @@ function App() {
   const weekendEveningLate = findHourValue(lastYearPattern.pattern, '7p', 'weekend');
   const commuteTakeaway = `In ${firstYearPattern.year}, the 8am weekday rush was muted (index ${morningRushEarly}) while weekend evenings ran nearly as busy as weekdays (index ${weekendEveningEarly} at 7pm). By ${lastYearPattern.year}, the 8am commute rush is back near its old strength (index ${morningRushLate}), and weekend evening demand has cooled to ${weekendEveningLate}, showing the day is less flat and rush hour has reasserted itself.`;
 
+  const worstYear = data.yearlyTrend.reduce((min, year) => (year.ridership < min.ridership ? year : min), data.yearlyTrend[0]);
+  const latestYearlyTrend = data.yearlyTrend[data.yearlyTrend.length - 1];
+  const pandemicTakeaway = `${worstYear.year} was the low point at just ${worstYear.recovery}% of the five-year peak. By ${latestYearlyTrend.year}, ridership climbed back to ${latestYearlyTrend.recovery}% of that peak, a ${latestYearlyTrend.recovery - worstYear.recovery}-point recovery.`;
+
+  const firstPaymentYear = data.paymentTrend[0];
+  const paymentTakeaway = `OMNY grew from ${firstPaymentYear.omny}% of entries in ${firstPaymentYear.year} to ${latestPaymentYear.omny}% in ${latestPaymentYear.year}, while MetroCard fell from ${firstPaymentYear.metrocard}% to ${latestPaymentYear.metrocard}%, a clear swipe-to-tap shift.`;
+
+  const topBorough = data.boroughs.reduce((max, borough) => (borough.share > max.share ? borough : max), data.boroughs[0]);
+  const smallestBorough = data.boroughs.reduce((min, borough) => (borough.share < min.share ? borough : min), data.boroughs[0]);
+  const boroughTakeaway = `${topBorough.name} led with ${topBorough.share}% of measured entries, ${Math.round(
+    topBorough.share / smallestBorough.share,
+  )}x ${smallestBorough.name}'s ${smallestBorough.share}% share, showing entries stay concentrated near the busiest station clusters.`;
+
+  const topStation = data.stationRankings[0];
+  const fastestGrowingStation = data.stationRankings.reduce(
+    (max, station) => (station.change > max.change ? station : max),
+    data.stationRankings[0],
+  );
+  const rankingTakeaway = `${topStation.station} logged the most measured entries at ${formatFull(topStation.riders)}, while ${
+    fastestGrowingStation.station
+  } grew the fastest year over year at +${fastestGrowingStation.change}%.`;
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -118,10 +143,10 @@ function App() {
               </div>
             </div>
             <p className="metric-note">
-              <InfoTip text="These percentages are shares of measured subway entries, not unique riders, and 'recovery' compares 2024 totals with the highest annual total in the 2020-2024 dataset." />
               Percent metrics are shares of measured subway entries. The recovery figure compares 2024 ridership with
               the highest annual ridership in the 2020-2024 dataset.
             </p>
+            <Callout text="These percentages are shares of measured subway entries, not unique riders, and 'recovery' compares 2024 totals with the highest annual total in the 2020-2024 dataset." />
           </div>
 
           <div className="hero-visual">
@@ -152,11 +177,8 @@ function App() {
           <div className="section-head">
             <p className="eyebrow">The pandemic impact</p>
             <h2>2020 hit hard, then the city found its rhythm again.</h2>
-              <p>
-                <InfoTip text="Counts are total subway entries for the year, not unique riders. Each card's percentage compares that year against the highest annual total in the 2020-2024 dataset." />
-                Annual rider counts are shown as total subway entries. The percentage cards compare each year with the
-                highest annual total in this five-year view.
-              </p>
+            <p>{pandemicTakeaway}</p>
+            <Callout text="Annual rider counts are shown as total subway entries. The percentage cards compare each year with the highest annual total in this five-year view." />
           </div>
 
           <div className="chart-card large">
@@ -200,11 +222,8 @@ function App() {
           <div className="section-head">
             <p className="eyebrow">How commuting habits changed</p>
             <h2>Rush hour still rules, but the city is less rigid and more flexible.</h2>
-            <p>
-              <InfoTip text="Each series is indexed to its own busiest hour, not to total riders. A value of 100 marks that day-type's peak hour, so weekday and weekend bars aren't directly comparable in raw rider counts." />
-              Select a year to compare weekday and weekend demand by hour. Each series is indexed so its own busiest
-              hour equals 100.
-            </p>
+            <p>{commuteTakeaway}</p>
+            <Callout text="Select a year to compare weekday and weekend demand by hour. Each series is indexed so its own busiest hour equals 100." />
           </div>
 
           <div className="year-toggle" aria-label="Select commute pattern year">
@@ -239,10 +258,6 @@ function App() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-
-          <p className="insight-callout">
-            <strong>Takeaway:</strong> {commuteTakeaway}
-          </p>
         </section>
 
         <section className="panel story-panel split-panel">
@@ -250,11 +265,8 @@ function App() {
             <div className="section-head">
               <p className="eyebrow">Borough comparisons</p>
               <h2>Entries are grouped by the borough where the station is located.</h2>
-              <p>
-                <InfoTip text="This is not rider home borough or destination. It is each borough's share of measured subway entries by station location." />
-                This is not rider home borough or destination. It is each borough's share of measured subway entries by
-                station location.
-              </p>
+              <p>{boroughTakeaway}</p>
+              <Callout text="This is not rider home borough or destination. It is each borough's share of measured subway entries by station location." />
             </div>
             <div className="stat-list">
               {data.boroughs.map((borough) => (
@@ -297,10 +309,8 @@ function App() {
           <div className="section-head">
             <p className="eyebrow">Top station rankings</p>
             <h2>The busiest station complexes are ranked by total measured subway entries.</h2>
-            <p>
-              <InfoTip text="Rankings use total measured boardings/entries in the dataset for each station complex, not unique riders." />
-              Ranking uses total boardings/entries in the dataset, grouped by station complex.
-            </p>
+            <p>{rankingTakeaway}</p>
+            <Callout text="Rankings use total measured boardings/entries in the dataset for each station complex, not unique riders." />
           </div>
 
           <div className="ranking-list">
@@ -325,10 +335,8 @@ function App() {
             <div className="section-head">
               <p className="eyebrow">MetroCard vs OMNY</p>
               <h2>Payment habits shifted from swipes to taps over time.</h2>
-              <p>
-                <InfoTip text="Shares are based on measured subway entries by payment method, not the number of unique riders." />
-                The trend shows each payment method's share of measured subway entries for every year from 2020 to 2024.
-              </p>
+              <p>{paymentTakeaway}</p>
+              <Callout text="Shares are based on measured subway entries by payment method, not the number of unique riders." />
             </div>
             <div className="payment-list">
               {data.paymentBreakdown.map((entry) => (
@@ -375,9 +383,9 @@ function App() {
             <p className="eyebrow">Notable takeaways</p>
             <h2>Four plain-language signals from the data.</h2>
             <p>
-              <InfoTip text="These cards avoid hidden denominators: each metric names the exact year, place, or behavior it summarizes." />
               These cards avoid hidden denominators: each metric names the year, place, or behavior it summarizes.
             </p>
+            <Callout text="These cards avoid hidden denominators: each metric names the exact year, place, or behavior it summarizes." />
           </div>
 
           <div className="facts-grid">
