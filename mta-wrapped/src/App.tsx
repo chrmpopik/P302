@@ -164,10 +164,11 @@ function App() {
             </ResponsiveContainer>
           </div>
 
-          <div className="mini-grid">
+          <div className="pandemic-timeline">
             {data.yearlyTrend.map((year) => (
-              <article className="mini-card" key={year.year}>
-                <span>{year.year}</span>
+              <article className="timeline-node" key={year.year}>
+                <span className="timeline-dot" />
+                <span className="timeline-year">{year.year}</span>
                 <strong>{formatNumber(year.ridership)}</strong>
                 <p>{year.recovery}% of five-year peak. {year.highlight}</p>
               </article>
