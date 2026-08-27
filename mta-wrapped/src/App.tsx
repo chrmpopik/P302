@@ -88,7 +88,7 @@ function App() {
             <div className="hero-metrics">
               <div>
                 <strong>{formatNumber(data.headline.avgDailyRidership)}</strong>
-                <span>avg daily subway entries</span>
+                <span>2024 avg daily subway entries</span>
               </div>
               <div>
                 <strong>{data.headline.rebound}%</strong>
@@ -96,7 +96,7 @@ function App() {
               </div>
               <div>
                 <strong>{data.headline.omnyShare}%</strong>
-                <span>entries paid with OMNY</span>
+                <span>2024 entries paid with OMNY</span>
               </div>
             </div>
             <p className="metric-note">
