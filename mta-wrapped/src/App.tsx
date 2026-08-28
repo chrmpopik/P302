@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import {
   Area,
   AreaChart,
@@ -16,7 +17,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { loadRidershipSnapshot, type MtaDataset } from './data';
+import { fetchStationRankingsForYear, loadRidershipSnapshot, rankingYears, type MtaDataset, type StationRanking } from './data';
 
 const formatNumber = (value: number) =>
   new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
@@ -35,17 +36,79 @@ function Callout({ text }: { text: string }) {
   );
 }
 
+function FadeInSection({ className, children }: { className: string; children: ReactNode }) {
+  const ref = useRef<HTMLElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.unobserve(node);
+        }
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -60px 0px' },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <section ref={ref} className={`fade-section${visible ? ' is-visible' : ''} ${className}`}>
+      {children}
+    </section>
+  );
+}
+
 function App() {
   const [data, setData] = useState<MtaDataset | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedCommuteYear, setSelectedCommuteYear] = useState('2024');
   const [selectedRankingYear, setSelectedRankingYear] = useState('total');
+  const [rankingsByYear, setRankingsByYear] = useState<Record<string, StationRanking[]>>({});
+  const [rankingsLoading, setRankingsLoading] = useState(false);
+
+  useEffect(() => {
+    if (selectedRankingYear === 'total' || rankingsByYear[selectedRankingYear]) return;
+
+    let cancelled = false;
+    const controller = new AbortController();
+
+    async function loadYearRankings() {
+      setRankingsLoading(true);
+      try {
+        const rankings = await fetchStationRankingsForYear(selectedRankingYear, controller.signal);
+        if (!cancelled) setRankingsByYear((prev) => ({ ...prev, [selectedRankingYear]: rankings }));
+      } catch {
+        // Leave the year unset; the UI falls back to the total rankings.
+      } finally {
+        if (!cancelled) setRankingsLoading(false);
+      }
+    }
+
+    loadYearRankings();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [selectedRankingYear, rankingsByYear]);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadData() {
-      const snapshot = await loadRidershipSnapshot();
-      if (!cancelled) setData(snapshot);
+      try {
+        const snapshot = await loadRidershipSnapshot();
+        if (!cancelled) setData(snapshot);
+      } catch (error) {
+        if (!cancelled) setLoadError(error instanceof Error ? error.message : 'Failed to load ridership data.');
+      }
     }
 
     loadData();
@@ -54,6 +117,22 @@ function App() {
       cancelled = true;
     };
   }, []);
+
+  if (loadError) {
+    return (
+      <div className="app-shell">
+        <main className="story">
+          <section className="panel hero-panel">
+            <div className="hero-copy">
+              <p className="eyebrow">Couldn't load NYC ridership data</p>
+              <h1>The NY Open Data API didn't respond.</h1>
+              <p className="lede">{loadError}</p>
+            </div>
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   if (!data) {
     return (
@@ -99,19 +178,21 @@ function App() {
   )}x ${smallestBorough.name}'s ${smallestBorough.share}% share, showing entries stay concentrated near the busiest station clusters.`;
 
   const topStation = data.stationRankings[0];
-  const fastestGrowingStation = data.stationRankings.reduce(
-    (max, station) => (station.change > max.change ? station : max),
-    data.stationRankings[0],
+  const stationsWithChange = data.stationRankings.filter(
+    (station): station is typeof station & { change: number } => station.change != null,
   );
-  const rankingTakeaway = `${topStation.station} logged the most measured entries at ${formatFull(topStation.riders)}, while ${
-    fastestGrowingStation.station
-  } grew the fastest year over year at +${fastestGrowingStation.change}%.`;
+  const fastestGrowingStation = stationsWithChange.length
+    ? stationsWithChange.reduce((max, station) => (station.change > max.change ? station : max), stationsWithChange[0])
+    : null;
+  const rankingTakeaway = fastestGrowingStation
+    ? `${topStation.station} logged the most measured entries at ${formatFull(topStation.riders)}, while ${
+        fastestGrowingStation.station
+      } grew the fastest year over year at ${fastestGrowingStation.change > 0 ? '+' : ''}${fastestGrowingStation.change}%.`
+    : `${topStation.station} logged the most measured entries at ${formatFull(topStation.riders)}.`;
 
-  const rankingYears = data.stationRankingsByYear.map((entry) => entry.year);
+  const rankingYearsList = rankingYears;
   const selectedStationRankings =
-    selectedRankingYear === 'total'
-      ? data.stationRankings
-      : data.stationRankingsByYear.find((entry) => entry.year === selectedRankingYear)?.rankings ?? data.stationRankings;
+    selectedRankingYear === 'total' ? data.stationRankings : rankingsByYear[selectedRankingYear] ?? data.stationRankings;
 
   const boroughHeadline = `${topBorough.name} rules the turnstiles`;
   const rankingHeadline = `${topStation.station} is the busiest hub in the system`;
@@ -130,7 +211,7 @@ function App() {
       </header>
 
       <main className="story">
-        <section className="hero-panel panel">
+        <FadeInSection className="hero-panel panel">
           <div className="hero-copy">
             <p className="eyebrow">NYC subway ridership, explained</p>
             <h1>From empty platforms to packed rush hour, New York kept moving.</h1>
@@ -181,9 +262,9 @@ function App() {
               </div>
             </div>
           </div>
-        </section>
+        </FadeInSection>
 
-        <section className="panel story-panel">
+        <FadeInSection className="panel story-panel">
           <div className="section-head">
             <p className="eyebrow">The pandemic impact</p>
             <h2>2020 hit hard, then the city found its rhythm again.</h2>
@@ -222,13 +303,13 @@ function App() {
                 <span className="timeline-dot" />
                 <span className="timeline-year">{year.year}</span>
                 <strong>{formatNumber(year.ridership)}</strong>
-                <p>{year.recovery}% of five-year peak. {year.highlight}</p>
+                <p>{year.recovery}% of five-year peak.</p>
               </article>
             ))}
           </div>
-        </section>
+        </FadeInSection>
 
-        <section className="panel story-panel">
+        <FadeInSection className="panel story-panel">
           <div className="section-head">
             <p className="eyebrow">How commuting habits changed</p>
             <h2>Rush hour still rules, but the city is less rigid and more flexible.</h2>
@@ -268,9 +349,9 @@ function App() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </section>
+        </FadeInSection>
 
-        <section className="panel story-panel split-panel">
+        <FadeInSection className="panel story-panel split-panel">
           <div>
             <div className="section-head">
               <p className="eyebrow">Borough comparisons</p>
@@ -313,9 +394,9 @@ function App() {
               </PieChart>
             </ResponsiveContainer>
           </div>
-        </section>
+        </FadeInSection>
 
-        <section className="panel story-panel">
+        <FadeInSection className="panel story-panel">
           <div className="section-head">
             <p className="eyebrow">Top station rankings</p>
             <h2>{rankingHeadline}</h2>
@@ -331,7 +412,7 @@ function App() {
             >
               Total
             </button>
-            {rankingYears.map((year) => (
+            {rankingYearsList.map((year) => (
               <button
                 className={year === selectedRankingYear ? 'active' : ''}
                 key={year}
@@ -343,24 +424,28 @@ function App() {
             ))}
           </div>
 
-          <div className="ranking-list">
-            {selectedStationRankings.map((station, index) => (
-              <article className="rank-card" key={station.station}>
-                <span className="rank-badge">#{index + 1}</span>
-                <div>
-                  <h3>{station.station}</h3>
-                  <p>{station.borough}</p>
-                </div>
-                <div className="rank-metrics">
-                  <strong>{formatFull(station.riders)}</strong>
-                  <span>measured entries</span>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+          {rankingsLoading && selectedRankingYear !== 'total' && !rankingsByYear[selectedRankingYear] ? (
+            <p className="metric-note">Loading {selectedRankingYear} rankings…</p>
+          ) : (
+            <div className="ranking-list">
+              {selectedStationRankings.map((station, index) => (
+                <article className="rank-card" key={station.station}>
+                  <span className="rank-badge">#{index + 1}</span>
+                  <div>
+                    <h3>{station.station}</h3>
+                    <p>{station.borough}</p>
+                  </div>
+                  <div className="rank-metrics">
+                    <strong>{formatFull(station.riders)}</strong>
+                    <span>measured entries</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </FadeInSection>
 
-        <section className="panel story-panel split-panel">
+        <FadeInSection className="panel story-panel split-panel">
           <div>
             <div className="section-head">
               <p className="eyebrow">MetroCard vs OMNY</p>
@@ -406,9 +491,9 @@ function App() {
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </section>
+        </FadeInSection>
 
-        <section className="panel facts-panel">
+        <FadeInSection className="panel facts-panel">
           <div className="section-head">
             <p className="eyebrow">Notable takeaways</p>
             <h2>Ridership recovered, entries stayed concentrated in Manhattan, and OMNY became the dominant payment method.</h2>
@@ -424,7 +509,7 @@ function App() {
               </article>
             ))}
           </div>
-        </section>
+        </FadeInSection>
       </main>
     </div>
   );
