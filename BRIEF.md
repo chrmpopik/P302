@@ -3,15 +3,16 @@
 Create a Spotify Wrapped-inspired interactive experience that transforms years of MTA ridership data into an engaging story about how New York City moved, changed, and recovered between 2020 and 2024. The experience should highlight major trends, recovery milestones, commuting patterns, station rankings, payment method shifts, and surprising facts through a fun, shareable, and visually immersive journey. The goal is to make complex transportation data approachable, memorable, and entertaining while encouraging exploration. The dataset includes hourly ridership data by station, borough, transit mode, and payment method.
 
 ## Technology
-– Front-end framework (React or Vue)
+– Front-end framework: React 19
 – TypeScript
-– Data visualization library (D3, Nivo, Recharts, or Observable Plot)
-– API-driven data source
+– Vite as the build tool/dev server
+– Data visualization library: Recharts
+– API-driven data source: fetched client-side directly from the NY Open Data Socrata API on page load (no backend server)
 – Responsive web experience optimized for desktop and mobile
-–Hosting via Vercel
+–Hosting via Vercel (not yet deployed/configured; currently runs via `npm run dev` locally)
 
 ## Data
-Use MTA Subway Hourly Ridership: 2020-2024 API which includes hourly ridership estimates by station complex, borough, transit mode, payment method, and fare category. Potential insights include ridership recovery over time, busiest stations, peak travel hours, borough trends, weekday versus weekend patterns, and the transition from MetroCard to OMNY.
+Use MTA Subway Hourly Ridership: 2020-2024 API which includes hourly ridership estimates by station complex, borough, transit mode, and payment method. Potential insights include ridership recovery over time, busiest stations, peak travel hours, borough trends, weekday versus weekend patterns, and the transition from MetroCard to OMNY. All figures shown are fetched live from the API on load; no mock or placeholder data is used. Note: the live dataset only reports `omny` and `metrocard` payment methods — a separate single-ride fare category is not collected, so the payment breakdown only compares those two methods.
 
 ## Layout
 The experience should feel like a guided story rather than a traditional dashboard. Users move through a series of full-screen sections that reveal:
@@ -19,10 +20,10 @@ The experience should feel like a guided story rather than a traditional dashboa
 – The pandemic impact and recovery
 – How commuting habits changed
 – Borough comparisons
-– Station superlatives and rankings
+– Station superlatives and rankings, with tabs to switch between the all-time total and each individual year (2020-2024)
 – MetroCard vs. OMNY evolution
-– Fun facts and surprising insights
-– A final "NYC Wrapped" recap card
+– Fun facts and surprising insights, combined with a closing "NYC Wrapped" recap into a single takeaways section
+– A footer crediting the Metropolitan Transportation Authority as the data source, linking to the NY Open Data dataset (opens in a new tab)
 
 ## Design
 – Inspired by Spotify Wrapped, Apple Replay, and Year in Search
@@ -33,12 +34,13 @@ The experience should feel like a guided story rather than a traditional dashboa
 – Social-sharing aesthetic with card-based summaries
 
 ## Interactions
-– Scroll-driven storytelling
+– Scroll-driven storytelling, with each section fading and sliding into view as it enters the viewport
 – Animated transitions and counters
 – Interactive timelines
 – Hover/tap exploration of stations and boroughs
-– Dynamic ranking cards
+– Dynamic ranking cards with year-by-year filtering
 – Expandable insights and fun facts
+– Inline info icons that reveal methodology/caveat notes for each chart on hover
 – Shareable summary cards
 – Smooth hover states
 
