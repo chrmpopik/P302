@@ -219,7 +219,8 @@ function buildDatasetFromAggregates({
 
   const totalBoroughRidership = boroughs.reduce((sum, item) => sum + item.ridership, 0) || 1;
   boroughs.forEach((entry) => {
-    entry.share = Number(((entry.ridership / totalBoroughRidership) * 100).toFixed(0));
+    // Keep full precision here; the UI rounds/formats for display so a tiny real share isn't truncated to 0.
+    entry.share = (entry.ridership / totalBoroughRidership) * 100;
   });
 
   const stationYearTotals = new Map<string, number>();

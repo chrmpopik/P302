@@ -25,6 +25,10 @@ const formatNumber = (value: number) =>
 const formatFull = (value: number) =>
   new Intl.NumberFormat('en-US').format(value);
 
+const formatShare = (value: number) => (value > 0 && value < 1 ? '<1%' : `${Math.round(value)}%`);
+
+const stripStationLines = (name: string) => name.replace(/\s*\([^)]*\)/g, '').trim();
+
 function Callout({ text }: { text: string }) {
   return (
     <p className="insight-callout">
@@ -173,11 +177,15 @@ function App() {
 
   const topBorough = data.boroughs.reduce((max, borough) => (borough.share > max.share ? borough : max), data.boroughs[0]);
   const smallestBorough = data.boroughs.reduce((min, borough) => (borough.share < min.share ? borough : min), data.boroughs[0]);
-  const boroughTakeaway = `${topBorough.name} led with ${topBorough.share}% of measured entries, ${Math.round(
-    topBorough.share / smallestBorough.share,
-  )}x ${smallestBorough.name}'s ${smallestBorough.share}% share, showing entries stay concentrated near the busiest station clusters.`;
+  const boroughTakeaway =
+    smallestBorough.share >= 1
+      ? `${topBorough.name} led with ${formatShare(topBorough.share)} of measured entries, ${Math.round(
+          topBorough.share / smallestBorough.share,
+        )}x ${smallestBorough.name}'s ${formatShare(smallestBorough.share)} share, showing entries stay concentrated near the busiest station clusters.`
+      : `${topBorough.name} led with ${formatShare(topBorough.share)} of measured entries, while ${smallestBorough.name} accounted for barely a measurable share (${formatShare(smallestBorough.share)}), showing entries stay concentrated near the busiest station clusters.`;
 
   const topStation = data.stationRankings[0];
+  const topStationName = stripStationLines(topStation.station);
   const stationsWithChange = data.stationRankings.filter(
     (station): station is typeof station & { change: number } => station.change != null,
   );
@@ -185,17 +193,17 @@ function App() {
     ? stationsWithChange.reduce((max, station) => (station.change > max.change ? station : max), stationsWithChange[0])
     : null;
   const rankingTakeaway = fastestGrowingStation
-    ? `${topStation.station} logged the most measured entries at ${formatFull(topStation.riders)}, while ${
-        fastestGrowingStation.station
-      } grew the fastest year over year at ${fastestGrowingStation.change > 0 ? '+' : ''}${fastestGrowingStation.change}%.`
-    : `${topStation.station} logged the most measured entries at ${formatFull(topStation.riders)}.`;
+    ? `${topStationName} logged the most measured entries at ${formatFull(topStation.riders)}, while ${stripStationLines(
+        fastestGrowingStation.station,
+      )} grew the fastest year over year at ${fastestGrowingStation.change > 0 ? '+' : ''}${fastestGrowingStation.change}%.`
+    : `${topStationName} logged the most measured entries at ${formatFull(topStation.riders)}.`;
 
   const rankingYearsList = rankingYears;
   const selectedStationRankings =
     selectedRankingYear === 'total' ? data.stationRankings : rankingsByYear[selectedRankingYear] ?? data.stationRankings;
 
   const boroughHeadline = `${topBorough.name} rules the turnstiles`;
-  const rankingHeadline = `${topStation.station} is the busiest hub in the system`;
+  const rankingHeadline = `${topStationName} is the busiest hub in the system`;
 
   return (
     <div className="app-shell">
@@ -369,7 +377,7 @@ function App() {
                   <div className="bar-wrap">
                     <span style={{ width: `${borough.share}%`, background: borough.color }} />
                   </div>
-                  <strong>{borough.share}%</strong>
+                  <strong>{formatShare(borough.share)}</strong>
                 </div>
               ))}
             </div>
@@ -432,7 +440,7 @@ function App() {
                 <article className="rank-card" key={station.station}>
                   <span className="rank-badge">#{index + 1}</span>
                   <div>
-                    <h3>{station.station}</h3>
+                    <h3>{stripStationLines(station.station)}</h3>
                     <p>{station.borough}</p>
                   </div>
                   <div className="rank-metrics">
