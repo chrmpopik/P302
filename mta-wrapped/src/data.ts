@@ -28,7 +28,6 @@ export type PaymentTrend = {
   year: string;
   omny: number;
   metrocard: number;
-  singleRide: number;
 };
 
 export type HourlyPattern = {
@@ -116,7 +115,6 @@ const boroughColors: Record<string, string> = {
 const paymentColors: Record<string, string> = {
   omny: '#6ee7b7',
   metrocard: '#8b5cf6',
-  'single ride': '#f59e0b',
   'omny tap': '#6ee7b7',
 };
 
@@ -151,7 +149,7 @@ function formatCompact(value: number): string {
 }
 
 function paymentDisplayName(name: string): string {
-  return name === 'omny' ? 'OMNY tap' : name === 'metrocard' ? 'MetroCard' : 'Single ride';
+  return name === 'omny' ? 'OMNY tap' : 'MetroCard';
 }
 
 async function fetchGroupedRows<T>(params: Record<string, string>, signal: AbortSignal): Promise<T[]> {
@@ -263,14 +261,12 @@ function buildDatasetFromAggregates({
     const yearPaymentTotals = paymentTotalsByYear.get(year) ?? new Map<string, number>();
     const omny = yearPaymentTotals.get('omny') ?? yearPaymentTotals.get('omny tap') ?? 0;
     const metrocard = yearPaymentTotals.get('metrocard') ?? 0;
-    const singleRide = yearPaymentTotals.get('single ride') ?? 0;
-    const total = omny + metrocard + singleRide || 1;
+    const total = omny + metrocard || 1;
 
     return {
       year,
       omny: Number(((omny / total) * 100).toFixed(0)),
       metrocard: Number(((metrocard / total) * 100).toFixed(0)),
-      singleRide: Number(((singleRide / total) * 100).toFixed(0)),
     };
   });
 

@@ -459,7 +459,7 @@ function App() {
               <p className="eyebrow">MetroCard vs OMNY</p>
               <h2>Payment habits shifted from swipes to taps over time.</h2>
               <p>{paymentTakeaway}</p>
-              <Callout text="Shares are based on measured subway entries by payment method, not the number of unique riders." />
+              <Callout text="Shares are based on measured subway entries by payment method, not the number of unique riders. This dataset only reports OMNY and MetroCard; a separate single-ride fare category isn't collected here." />
             </div>
             <div className="payment-list">
               {data.paymentBreakdown.map((entry) => (
@@ -482,10 +482,7 @@ function App() {
                 <XAxis dataKey="year" stroke="#9ca3af" />
                 <YAxis stroke="#9ca3af" domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
                 <Tooltip
-                  formatter={(value, name) => [
-                    `${value ?? 0}% of entries`,
-                    name === 'omny' ? 'OMNY tap' : name === 'metrocard' ? 'MetroCard' : 'Single ride',
-                  ]}
+                  formatter={(value, name) => [`${value ?? 0}% of entries`, name === 'omny' ? 'OMNY tap' : 'MetroCard']}
                   contentStyle={{
                     background: '#0d1322',
                     border: '1px solid rgba(255,255,255,0.12)',
@@ -495,7 +492,6 @@ function App() {
                 <Legend />
                 <Line type="monotone" dataKey="omny" name="OMNY tap" stroke="#6ee7b7" strokeWidth={3} dot={{ r: 4 }} />
                 <Line type="monotone" dataKey="metrocard" name="MetroCard" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4 }} />
-                <Line type="monotone" dataKey="singleRide" name="Single ride" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -519,6 +515,16 @@ function App() {
           </div>
         </FadeInSection>
       </main>
+
+      <footer className="site-footer">
+        <p>
+          This experience is powered by{' '}
+          <a href="https://data.ny.gov/d/wujg-7c2s" target="_blank" rel="noopener noreferrer">
+            data
+          </a>{' '}
+          from the Metropolitan Transportation Authority.
+        </p>
+      </footer>
     </div>
   );
 }

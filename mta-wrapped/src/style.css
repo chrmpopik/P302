@@ -25,6 +25,14 @@ button, input, select, textarea { font: inherit; }
   margin: 0 auto;
   padding: 28px 0 80px;
 }
+.site-footer {
+  margin-top: 12px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+.site-footer a { color: #a78bfa; text-decoration: underline; }
+.site-footer a:hover { color: #22d3ee; }
 .topbar {
   display: flex; justify-content: space-between; align-items: center; padding: 8px 0 24px;
 }
