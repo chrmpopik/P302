@@ -78,7 +78,16 @@ function App() {
   const [rankingsLoading, setRankingsLoading] = useState(false);
 
   useEffect(() => {
-    if (selectedRankingYear === 'total' || rankingsByYear[selectedRankingYear]) return;
+    if (selectedRankingYear === 'total') return;
+
+    const snapshotRankings = data?.stationRankingsByYear.find((entry) => entry.year === selectedRankingYear)?.rankings;
+    if (Array.isArray(snapshotRankings) && snapshotRankings.length > 0) {
+      setRankingsByYear((prev) => ({ ...prev, [selectedRankingYear]: snapshotRankings }));
+      setRankingsLoading(false);
+      return;
+    }
+
+    if (Array.isArray(rankingsByYear[selectedRankingYear]) && rankingsByYear[selectedRankingYear].length > 0) return;
 
     let cancelled = false;
     const controller = new AbortController();
@@ -87,9 +96,11 @@ function App() {
       setRankingsLoading(true);
       try {
         const rankings = await fetchStationRankingsForYear(selectedRankingYear, controller.signal);
-        if (!cancelled) setRankingsByYear((prev) => ({ ...prev, [selectedRankingYear]: rankings }));
+        if (!cancelled) {
+          setRankingsByYear((prev) => ({ ...prev, [selectedRankingYear]: rankings }));
+        }
       } catch {
-        // Leave the year unset; the UI falls back to the total rankings.
+        // Keep the existing total view; do not substitute mock values.
       } finally {
         if (!cancelled) setRankingsLoading(false);
       }
@@ -101,7 +112,7 @@ function App() {
       cancelled = true;
       controller.abort();
     };
-  }, [selectedRankingYear, rankingsByYear]);
+  }, [selectedRankingYear, data]);
 
   useEffect(() => {
     let cancelled = false;
@@ -199,8 +210,16 @@ function App() {
     : `${topStationName} logged the most measured entries at ${formatFull(topStation.riders)}.`;
 
   const rankingYearsList = rankingYears;
+  const cachedYearRankings = data.stationRankingsByYear.find((entry) => entry.year === selectedRankingYear)?.rankings;
+  const yearRankings = rankingsByYear[selectedRankingYear];
   const selectedStationRankings =
-    selectedRankingYear === 'total' ? data.stationRankings : rankingsByYear[selectedRankingYear] ?? data.stationRankings;
+    selectedRankingYear === 'total'
+      ? data.stationRankings
+      : Array.isArray(cachedYearRankings) && cachedYearRankings.length > 0
+        ? cachedYearRankings
+        : Array.isArray(yearRankings) && yearRankings.length > 0
+          ? yearRankings
+          : data.stationRankings;
 
   const boroughHeadline = `${topBorough.name} rules the turnstiles`;
   const rankingHeadline = `${topStationName} is the busiest hub in the system`;

@@ -118,100 +118,6 @@ const paymentColors: Record<string, string> = {
   'omny tap': '#6ee7b7',
 };
 
-function buildFallbackDataset(): MtaDataset {
-  const yearlyTrend: YearlyTrend[] = [
-    { year: '2020', ridership: 640920348, recovery: 53 },
-    { year: '2021', ridership: 761103933, recovery: 63 },
-    { year: '2022', ridership: 1016703072, recovery: 84 },
-    { year: '2023', ridership: 1158331841, recovery: 96 },
-    { year: '2024', ridership: 1206083955, recovery: 100 },
-  ];
-
-  const boroughs: BoroughData[] = [
-    { name: 'Manhattan', ridership: 2566021754, share: 41, color: '#7c3aed' },
-    { name: 'Brooklyn', ridership: 1098172665, share: 18, color: '#22d3ee' },
-    { name: 'Queens', ridership: 734785978, share: 12, color: '#fbbf24' },
-    { name: 'Bronx', ridership: 392295763, share: 6, color: '#34d399' },
-    { name: 'Staten Island', ridership: 84470589, share: 1, color: '#f97316' },
-  ];
-
-  const stationRankings: StationRanking[] = [
-    { station: 'Times Sq-42 St / 42 St', riders: 168202157, borough: 'Manhattan', change: 5.2 },
-    { station: 'Grand Central-42 St', riders: 145401873, borough: 'Manhattan', change: 4.1 },
-    { station: 'Penn Station', riders: 130874222, borough: 'Manhattan', change: 3.6 },
-    { station: 'Atlantic Av-Barclays Ctr', riders: 111923844, borough: 'Brooklyn', change: 2.8 },
-    { station: 'Jackson Heights-Roosevelt Av', riders: 106732443, borough: 'Queens', change: 1.9 },
-  ];
-
-  const baseHourlyPattern: HourlyPattern[] = [
-    { hour: '6a', weekday: 42, weekend: 30 },
-    { hour: '8a', weekday: 96, weekend: 66 },
-    { hour: '10a', weekday: 64, weekend: 75 },
-    { hour: '12p', weekday: 58, weekend: 70 },
-    { hour: '3p', weekday: 56, weekend: 58 },
-    { hour: '5p', weekday: 89, weekend: 68 },
-    { hour: '7p', weekday: 74, weekend: 82 },
-    { hour: '9p', weekday: 46, weekend: 49 },
-  ];
-
-  const hourlyPattern = baseHourlyPattern.map((entry) => ({ ...entry }));
-  const hourlyPatternByYear: YearlyHourlyPattern[] = dataYears.map((year, yearIndex) => ({
-    year,
-    pattern: baseHourlyPattern.map((entry) => ({
-      hour: entry.hour,
-      weekday: Math.min(100, Math.round(entry.weekday * (0.82 + yearIndex * 0.06))),
-      weekend: Math.min(100, Math.round(entry.weekend * (0.73 + yearIndex * 0.05))),
-    })),
-  }));
-
-  const paymentBreakdown: PaymentMethod[] = [
-    { name: 'OMNY tap', value: 83, color: '#6ee7b7' },
-    { name: 'MetroCard', value: 17, color: '#8b5cf6' },
-  ];
-
-  const paymentTrend: PaymentTrend[] = [
-    { year: '2020', omny: 4, metrocard: 96 },
-    { year: '2021', omny: 18, metrocard: 82 },
-    { year: '2022', omny: 42, metrocard: 58 },
-    { year: '2023', omny: 68, metrocard: 32 },
-    { year: '2024', omny: 83, metrocard: 17 },
-  ];
-
-  const stationRankingsByYear: YearlyStationRankings[] = dataYears.map((year, yearIndex) => ({
-    year,
-    rankings: stationRankings.map((station, index) => ({
-      ...station,
-      riders: Math.round(station.riders * (0.72 + (yearIndex + 1) * 0.07 + index * 0.005)),
-      change: yearIndex === 0 ? null : Number((index * 0.8 + (yearIndex - 1) * 1.4).toFixed(1)),
-    })),
-  }));
-
-  const facts: InsightCard[] = [
-    { title: 'The comeback was real', stat: '2024', copy: 'The latest year reached 100% of the strongest measured year in this dataset.' },
-    { title: 'Top entry borough', stat: 'Manhattan', copy: 'Manhattan stations generated the largest share of subway entries.' },
-    { title: 'OMNY changed the rhythm', stat: '83%', copy: 'OMNY is the majority of measured subway entries in the latest year.' },
-    { title: 'Daily movement', stat: '3.3M', copy: 'Average daily entries are calculated from total measured 2024 ridership.' },
-  ];
-
-  return {
-    headline: {
-      totalRidership: 1206083955,
-      avgDailyRidership: 3301322,
-      rebound: 100,
-      omnyShare: 83,
-    },
-    yearlyTrend,
-    boroughs,
-    stationRankings,
-    stationRankingsByYear,
-    paymentBreakdown,
-    paymentTrend,
-    hourlyPattern,
-    hourlyPatternByYear,
-    facts,
-  };
-}
-
 function normalizePaymentName(value?: string): string {
   return (value ?? '').trim().toLowerCase();
 }
@@ -531,29 +437,12 @@ async function fetchRidershipSnapshotFromApi(): Promise<MtaDataset> {
     });
   } catch (error) {
     window.clearTimeout(timeout);
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      console.warn('NY Open Data timed out; falling back to bundled snapshot.', error);
-      return buildFallbackDataset();
-    }
-
-    console.warn('NY Open Data request failed; falling back to bundled snapshot.', error);
-    return buildFallbackDataset();
+    throw error instanceof Error ? error : new Error('Failed to load ridership data from the NY Open Data API.');
   }
 }
 
 export async function loadRidershipSnapshot(): Promise<MtaDataset> {
-  const fallbackDataset = buildFallbackDataset();
-
-  try {
-    const remoteSnapshot = await Promise.race([
-      fetchRidershipSnapshotFromApi(),
-      new Promise<MtaDataset | null>((resolve) => window.setTimeout(() => resolve(null), 2500)),
-    ]);
-
-    return remoteSnapshot ?? fallbackDataset;
-  } catch {
-    return fallbackDataset;
-  }
+  return fetchRidershipSnapshotFromApi();
 }
 
 export const rankingYears = dataYears;
