@@ -2,7 +2,7 @@
 
 A Spotify Wrapped-inspired, scroll-driven story built from real MTA subway ridership data. It walks through ridership recovery after the pandemic, commuting pattern shifts, borough comparisons, station rankings, and the MetroCard-to-OMNY transition.
 
-See [../BRIEF.md](../BRIEF.md) for the full project brief.
+See [BRIEF.md](BRIEF.md) for the full project brief.
 
 ## Tech stack
 
