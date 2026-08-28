@@ -103,6 +103,9 @@ type HourlyAggregate = YearAggregate & {
 
 const dataYears = ['2020', '2021', '2022', '2023', '2024'];
 const hourLabels = ['6a', '8a', '10a', '12p', '3p', '5p', '7p', '9p'];
+const ridershipCacheKey = 'mta-ridership-snapshot-v1';
+const ridershipCacheTtlMs = 1000 * 60 * 60 * 12;
+const snapshotArtifactPath = '/mta-ridership-snapshot.json';
 
 const boroughColors: Record<string, string> = {
   Manhattan: '#7c3aed',
@@ -148,6 +151,44 @@ function formatCompact(value: number): string {
   return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
 }
 
+function readCachedRidershipSnapshot(): MtaDataset | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const raw = window.localStorage.getItem(ridershipCacheKey);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Partial<MtaDataset> & { cachedAt?: number };
+    if (!parsed || !Array.isArray(parsed.yearlyTrend) || !parsed.headline) return null;
+
+    const age = Date.now() - (parsed.cachedAt ?? 0);
+    if (age > ridershipCacheTtlMs) {
+      window.localStorage.removeItem(ridershipCacheKey);
+      return null;
+    }
+
+    return parsed as MtaDataset;
+  } catch {
+    try {
+      window.localStorage.removeItem(ridershipCacheKey);
+    } catch {
+      // Ignore storage issues; the app can still continue with a live refresh.
+    }
+    return null;
+  }
+}
+
+function writeCachedRidershipSnapshot(snapshot: MtaDataset): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const cacheable = { ...snapshot, cachedAt: Date.now() };
+    window.localStorage.setItem(ridershipCacheKey, JSON.stringify(cacheable));
+  } catch {
+    // Ignore storage quota issues; the app should still work without the cache.
+  }
+}
+
 function paymentDisplayName(name: string): string {
   return name === 'omny' ? 'OMNY tap' : 'MetroCard';
 }
@@ -161,7 +202,7 @@ async function fetchGroupedRows<T>(params: Record<string, string>, signal: Abort
 
   let lastError: unknown;
 
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
     try {
       const response = await fetch(url.toString(), {
         signal,
@@ -181,7 +222,7 @@ async function fetchGroupedRows<T>(params: Record<string, string>, signal: Abort
       if (signal.aborted) {
         throw error;
       }
-      if (attempt < 3) {
+      if (attempt < 2) {
         continue;
       }
     }
@@ -367,8 +408,6 @@ async function fetchRidershipSnapshotFromApi(): Promise<MtaDataset> {
   const where = "transit_mode='subway' AND transit_timestamp >= '2020-01-01T00:00:00' AND transit_timestamp < '2025-01-01T00:00:00'";
 
   const controller = new AbortController();
-  const timeoutMs = 45000;
-  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const [annualRows, boroughRows, stationRows, paymentRows, hourlyRows] = await Promise.all([
@@ -422,8 +461,6 @@ async function fetchRidershipSnapshotFromApi(): Promise<MtaDataset> {
         }, controller.signal)
       : [];
 
-    window.clearTimeout(timeout);
-
     const stationRankingsByYear: YearlyStationRankings[] = dataYears.map((year) => ({ year, rankings: [] }));
 
     return buildDatasetFromAggregates({
@@ -436,13 +473,30 @@ async function fetchRidershipSnapshotFromApi(): Promise<MtaDataset> {
       hourlyRows,
     });
   } catch (error) {
-    window.clearTimeout(timeout);
     throw error instanceof Error ? error : new Error('Failed to load ridership data from the NY Open Data API.');
   }
 }
 
 export async function loadRidershipSnapshot(): Promise<MtaDataset> {
-  return fetchRidershipSnapshotFromApi();
+  const cachedSnapshot = readCachedRidershipSnapshot();
+  if (cachedSnapshot) {
+    return cachedSnapshot;
+  }
+
+  try {
+    const response = await fetch(snapshotArtifactPath, { cache: 'no-store' });
+    if (response.ok) {
+      const snapshot = (await response.json()) as MtaDataset;
+      writeCachedRidershipSnapshot(snapshot);
+      return snapshot;
+    }
+  } catch {
+    // Fall through to the live API only if the snapshot file is unavailable.
+  }
+
+  const snapshot = await fetchRidershipSnapshotFromApi();
+  writeCachedRidershipSnapshot(snapshot);
+  return snapshot;
 }
 
 export const rankingYears = dataYears;

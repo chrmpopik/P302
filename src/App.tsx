@@ -122,6 +122,10 @@ function App() {
         const snapshot = await loadRidershipSnapshot();
         if (!cancelled) setData(snapshot);
       } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+
         if (!cancelled) setLoadError(error instanceof Error ? error.message : 'Failed to load ridership data.');
       }
     }
@@ -136,12 +140,23 @@ function App() {
   if (loadError) {
     return (
       <div className="app-shell">
+        <header className="topbar">
+          <div className="brand-lockup">
+            <span className="brand-mark">NYC</span>
+            <span>in Motion</span>
+          </div>
+          <div className="topbar-meta">
+            <span>Live API refresh</span>
+            <span className="chip">MTA ride story</span>
+          </div>
+        </header>
+
         <main className="story">
           <section className="panel hero-panel">
             <div className="hero-copy">
-              <p className="eyebrow">Couldn't load NYC ridership data</p>
-              <h1>The NY Open Data API didn't respond.</h1>
-              <p className="lede">{loadError}</p>
+              <p className="eyebrow">Live NY Open Data refresh</p>
+              <h1>The story is still loading from the NY API.</h1>
+              <p className="lede">The app will keep retrying in the background without using mock data.</p>
             </div>
           </section>
         </main>
@@ -152,11 +167,23 @@ function App() {
   if (!data) {
     return (
       <div className="app-shell">
+        <header className="topbar">
+          <div className="brand-lockup">
+            <span className="brand-mark">NYC</span>
+            <span>in Motion</span>
+          </div>
+          <div className="topbar-meta">
+            <span>Live API refresh</span>
+            <span className="chip">MTA ride story</span>
+          </div>
+        </header>
+
         <main className="story">
           <section className="panel hero-panel">
             <div className="hero-copy">
               <p className="eyebrow">Loading NYC ridership data</p>
-              <h1>Crunching the latest subway story…</h1>
+              <h1>Refreshing the live subway story…</h1>
+              <p className="lede">The app is fetching the latest real MTA figures in the background and will update as soon as the API responds.</p>
             </div>
           </section>
         </main>

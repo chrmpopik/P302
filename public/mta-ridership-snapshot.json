@@ -1,0 +1,451 @@
+{
+  "headline": {
+    "totalRidership": 1206083955,
+    "avgDailyRidership": 3295311,
+    "rebound": 100,
+    "omnyShare": 57
+  },
+  "yearlyTrend": [
+    {
+      "year": "2020",
+      "ridership": 640920348,
+      "recovery": 53
+    },
+    {
+      "year": "2021",
+      "ridership": 761103933,
+      "recovery": 63
+    },
+    {
+      "year": "2022",
+      "ridership": 1016703072,
+      "recovery": 84
+    },
+    {
+      "year": "2023",
+      "ridership": 1158331841,
+      "recovery": 96
+    },
+    {
+      "year": "2024",
+      "ridership": 1206083955,
+      "recovery": 100
+    }
+  ],
+  "boroughs": [
+    {
+      "name": "Manhattan",
+      "ridership": 2566021754,
+      "share": 53.647187091535656,
+      "color": "#7c3aed"
+    },
+    {
+      "name": "Brooklyn",
+      "ridership": 1098172665,
+      "share": 22.959226408049112,
+      "color": "#22d3ee"
+    },
+    {
+      "name": "Queens",
+      "ridership": 734785978,
+      "share": 15.361990120526078,
+      "color": "#fbbf24"
+    },
+    {
+      "name": "Bronx",
+      "ridership": 384162750,
+      "share": 8.031596338075643,
+      "color": "#34d399"
+    },
+    {
+      "name": "Staten Island",
+      "ridership": 2,
+      "share": 4.181350918627922e-8,
+      "color": "#f97316"
+    }
+  ],
+  "stationRankings": [
+    {
+      "station": "Times Sq-42 St (N,Q,R,W,S,1,2,3,7)/42 St (A,C,E)",
+      "riders": 168202157,
+      "borough": "Manhattan",
+      "change": 6.4
+    },
+    {
+      "station": "Grand Central-42 St (S,4,5,6,7)",
+      "riders": 115353629,
+      "borough": "Manhattan",
+      "change": 10.4
+    },
+    {
+      "station": "34 St-Herald Sq (B,D,F,M,N,Q,R,W)",
+      "riders": 97401047,
+      "borough": "Manhattan",
+      "change": 6
+    },
+    {
+      "station": "14 St-Union Sq (L,N,Q,R,W,4,5,6)",
+      "riders": 86561174,
+      "borough": "Manhattan",
+      "change": 6.2
+    },
+    {
+      "station": "Fulton St (A,C,J,Z,2,3,4,5)",
+      "riders": 70686291,
+      "borough": "Manhattan",
+      "change": 7.8
+    }
+  ],
+  "stationRankingsByYear": [
+    {
+      "year": "2020",
+      "rankings": []
+    },
+    {
+      "year": "2021",
+      "rankings": []
+    },
+    {
+      "year": "2022",
+      "rankings": []
+    },
+    {
+      "year": "2023",
+      "rankings": []
+    },
+    {
+      "year": "2024",
+      "rankings": []
+    }
+  ],
+  "paymentBreakdown": [
+    {
+      "name": "OMNY tap",
+      "value": 57,
+      "color": "#6ee7b7"
+    },
+    {
+      "name": "MetroCard",
+      "value": 43,
+      "color": "#8b5cf6"
+    }
+  ],
+  "paymentTrend": [
+    {
+      "year": "2020",
+      "omny": 4,
+      "metrocard": 96
+    },
+    {
+      "year": "2021",
+      "omny": 21,
+      "metrocard": 79
+    },
+    {
+      "year": "2022",
+      "omny": 35,
+      "metrocard": 65
+    },
+    {
+      "year": "2023",
+      "omny": 45,
+      "metrocard": 55
+    },
+    {
+      "year": "2024",
+      "omny": 57,
+      "metrocard": 43
+    }
+  ],
+  "hourlyPattern": [
+    {
+      "hour": "6a",
+      "weekday": 44,
+      "weekend": 25
+    },
+    {
+      "hour": "8a",
+      "weekday": 92,
+      "weekend": 46
+    },
+    {
+      "hour": "10a",
+      "weekday": 43,
+      "weekend": 66
+    },
+    {
+      "hour": "12p",
+      "weekday": 43,
+      "weekend": 84
+    },
+    {
+      "hour": "3p",
+      "weekday": 76,
+      "weekend": 100
+    },
+    {
+      "hour": "5p",
+      "weekday": 100,
+      "weekend": 98
+    },
+    {
+      "hour": "7p",
+      "weekday": 49,
+      "weekend": 72
+    },
+    {
+      "hour": "9p",
+      "weekday": 28,
+      "weekend": 48
+    }
+  ],
+  "hourlyPatternByYear": [
+    {
+      "year": "2020",
+      "pattern": [
+        {
+          "hour": "6a",
+          "weekday": 54,
+          "weekend": 34
+        },
+        {
+          "hour": "8a",
+          "weekday": 96,
+          "weekend": 54
+        },
+        {
+          "hour": "10a",
+          "weekday": 44,
+          "weekend": 65
+        },
+        {
+          "hour": "12p",
+          "weekday": 45,
+          "weekend": 80
+        },
+        {
+          "hour": "3p",
+          "weekday": 79,
+          "weekend": 100
+        },
+        {
+          "hour": "5p",
+          "weekday": 100,
+          "weekend": 93
+        },
+        {
+          "hour": "7p",
+          "weekday": 49,
+          "weekend": 67
+        },
+        {
+          "hour": "9p",
+          "weekday": 26,
+          "weekend": 45
+        }
+      ]
+    },
+    {
+      "year": "2021",
+      "pattern": [
+        {
+          "hour": "6a",
+          "weekday": 53,
+          "weekend": 28
+        },
+        {
+          "hour": "8a",
+          "weekday": 89,
+          "weekend": 47
+        },
+        {
+          "hour": "10a",
+          "weekday": 46,
+          "weekend": 64
+        },
+        {
+          "hour": "12p",
+          "weekday": 48,
+          "weekend": 82
+        },
+        {
+          "hour": "3p",
+          "weekday": 85,
+          "weekend": 100
+        },
+        {
+          "hour": "5p",
+          "weekday": 100,
+          "weekend": 95
+        },
+        {
+          "hour": "7p",
+          "weekday": 52,
+          "weekend": 71
+        },
+        {
+          "hour": "9p",
+          "weekday": 28,
+          "weekend": 46
+        }
+      ]
+    },
+    {
+      "year": "2022",
+      "pattern": [
+        {
+          "hour": "6a",
+          "weekday": 44,
+          "weekend": 25
+        },
+        {
+          "hour": "8a",
+          "weekday": 93,
+          "weekend": 46
+        },
+        {
+          "hour": "10a",
+          "weekday": 43,
+          "weekend": 67
+        },
+        {
+          "hour": "12p",
+          "weekday": 43,
+          "weekend": 85
+        },
+        {
+          "hour": "3p",
+          "weekday": 76,
+          "weekend": 100
+        },
+        {
+          "hour": "5p",
+          "weekday": 100,
+          "weekend": 100
+        },
+        {
+          "hour": "7p",
+          "weekday": 49,
+          "weekend": 74
+        },
+        {
+          "hour": "9p",
+          "weekday": 28,
+          "weekend": 49
+        }
+      ]
+    },
+    {
+      "year": "2023",
+      "pattern": [
+        {
+          "hour": "6a",
+          "weekday": 39,
+          "weekend": 23
+        },
+        {
+          "hour": "8a",
+          "weekday": 92,
+          "weekend": 45
+        },
+        {
+          "hour": "10a",
+          "weekday": 42,
+          "weekend": 66
+        },
+        {
+          "hour": "12p",
+          "weekday": 42,
+          "weekend": 85
+        },
+        {
+          "hour": "3p",
+          "weekday": 72,
+          "weekend": 100
+        },
+        {
+          "hour": "5p",
+          "weekday": 100,
+          "weekend": 100
+        },
+        {
+          "hour": "7p",
+          "weekday": 49,
+          "weekend": 74
+        },
+        {
+          "hour": "9p",
+          "weekday": 29,
+          "weekend": 50
+        }
+      ]
+    },
+    {
+      "year": "2024",
+      "pattern": [
+        {
+          "hour": "6a",
+          "weekday": 38,
+          "weekend": 22
+        },
+        {
+          "hour": "8a",
+          "weekday": 92,
+          "weekend": 44
+        },
+        {
+          "hour": "10a",
+          "weekday": 42,
+          "weekend": 65
+        },
+        {
+          "hour": "12p",
+          "weekday": 42,
+          "weekend": 84
+        },
+        {
+          "hour": "3p",
+          "weekday": 72,
+          "weekend": 100
+        },
+        {
+          "hour": "5p",
+          "weekday": 100,
+          "weekend": 98
+        },
+        {
+          "hour": "7p",
+          "weekday": 49,
+          "weekend": 73
+        },
+        {
+          "hour": "9p",
+          "weekday": 29,
+          "weekend": 49
+        }
+      ]
+    }
+  ],
+  "facts": [
+    {
+      "title": "The comeback was real",
+      "stat": "2024",
+      "copy": "The latest year reached 100% of the strongest measured year in this dataset."
+    },
+    {
+      "title": "Top entry borough",
+      "stat": "Manhattan",
+      "copy": "Manhattan stations generated the largest measured share of subway entries."
+    },
+    {
+      "title": "OMNY changed the rhythm",
+      "stat": "57%",
+      "copy": "This is the share of measured 2024 subway entries paid with OMNY."
+    },
+    {
+      "title": "Daily movement",
+      "stat": "3.3M",
+      "copy": "Average daily entries are calculated from total measured 2024 ridership."
+    }
+  ]
+}
